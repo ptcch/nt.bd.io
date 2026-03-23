@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🎁 Un regalo ti aspetta...</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Raleway:wght@200;300;400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --gold: #c9a84c;
+      --gold-light: #e8c97a;
+      --gold-dim: #7a5f2a;
+      --bg: #0d0a07;
+      --surface: #18130e;
+      --text: #f0e8d8;
+      --text-dim: #7a6e60;
+      --error: #c95050;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Raleway', sans-serif;
+      font-weight: 300;
+      overflow-x: hidden;
+    }
+
+    /* ── Background grain + radial glow ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% 20%, rgba(201,168,76,.12) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 40% at 80% 80%, rgba(201,168,76,.06) 0%, transparent 60%);
+      pointer-events: none; z-index: 0;
+    }
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 0; opacity: .5;
+    }
+
+    /* ── Confetti canvas ── */
+    #confetti { position: fixed; inset: 0; pointer-events: none; z-index: 100; }
+
+    /* ── Layout ── */
+    .scene {
+      position: relative; z-index: 1;
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 2rem;
+      gap: 0;
+    }
+
+    /* ── Decorative top ornament ── */
+    .ornament {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: .75rem;
+      letter-spacing: .4em;
+      color: var(--gold-dim);
+      text-transform: uppercase;
+      margin-bottom: 2.5rem;
+      display: flex; align-items: center; gap: 1rem;
+    }
+    .ornament::before, .ornament::after {
+      content: '';
+      display: block; width: 60px; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold-dim));
+    }
+    .ornament::after { transform: scaleX(-1); }
+
+    /* ── Card ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid rgba(201,168,76,.15);
+      border-radius: 2px;
+      padding: 3.5rem 3rem;
+      max-width: 440px; width: 100%;
+      text-align: center;
+      box-shadow: 0 0 80px rgba(201,168,76,.06), 0 2px 40px rgba(0,0,0,.6);
+      position: relative;
+      animation: fadeUp .8s cubic-bezier(.16,1,.3,1) both;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(28px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* corner decorations */
+    .card::before, .card::after,
+    .card .corner-br, .card .corner-tl-inner {
+      content: '';
+      position: absolute;
+      width: 22px; height: 22px;
+      border-color: var(--gold-dim);
+      border-style: solid;
+    }
+    .card::before  { top: 12px; left: 12px;  border-width: 1px 0 0 1px; }
+    .card::after   { top: 12px; right: 12px; border-width: 1px 1px 0 0; }
+    .card .corner-br { bottom: 12px; right: 12px; border-width: 0 1px 1px 0; }
+    .card .corner-bl { content: ''; position: absolute; bottom: 12px; left: 12px; width: 22px; height: 22px; border: 1px solid var(--gold-dim); border-width: 0 0 1px 1px; }
+
+    .gift-icon {
+      font-size: 3rem;
+      margin-bottom: 1.2rem;
+      display: block;
+      animation: float 3s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%,100% { transform: translateY(0); }
+      50%      { transform: translateY(-8px); }
+    }
+
+    h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2rem; font-weight: 400;
+      letter-spacing: .06em;
+      color: var(--gold-light);
+      margin-bottom: .5rem;
+      line-height: 1.2;
+    }
+    .subtitle {
+      font-size: .82rem;
+      letter-spacing: .18em;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      margin-bottom: 2.5rem;
+    }
+
+    /* ── Password input ── */
+    .input-wrap {
+      position: relative;
+      margin-bottom: 1rem;
+    }
+    .input-wrap input {
+      width: 100%;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(201,168,76,.2);
+      border-radius: 1px;
+      color: var(--text);
+      font-family: 'Raleway', sans-serif;
+      font-weight: 300;
+      font-size: 1rem;
+      letter-spacing: .25em;
+      text-align: center;
+      padding: .9rem 1.2rem;
+      outline: none;
+      transition: border-color .3s, box-shadow .3s;
+    }
+    .input-wrap input::placeholder { color: var(--text-dim); letter-spacing: .1em; }
+    .input-wrap input:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(201,168,76,.08);
+    }
+    .input-wrap.shake {
+      animation: shake .4s cubic-bezier(.36,.07,.19,.97);
+    }
+    @keyframes shake {
+      10%,90%  { transform: translateX(-2px); }
+      20%,80%  { transform: translateX(4px); }
+      30%,50%,70% { transform: translateX(-6px); }
+      40%,60%  { transform: translateX(6px); }
+    }
+
+    .error-msg {
+      font-size: .78rem;
+      color: var(--error);
+      letter-spacing: .05em;
+      min-height: 1.2em;
+      margin-bottom: .8rem;
+      transition: opacity .3s;
+    }
+
+    /* ── Button ── */
+    .btn {
+      width: 100%;
+      background: linear-gradient(135deg, var(--gold-dim), var(--gold), var(--gold-dim));
+      background-size: 200%;
+      border: none;
+      border-radius: 1px;
+      color: var(--bg);
+      font-family: 'Raleway', sans-serif;
+      font-weight: 400;
+      font-size: .82rem;
+      letter-spacing: .3em;
+      text-transform: uppercase;
+      padding: .95rem 2rem;
+      cursor: pointer;
+      transition: background-position .5s, box-shadow .3s, transform .15s;
+    }
+    .btn:hover {
+      background-position: right center;
+      box-shadow: 0 0 30px rgba(201,168,76,.3);
+    }
+    .btn:active { transform: scale(.98); }
+
+    .hint {
+      margin-top: 2rem;
+      font-size: .72rem;
+      color: var(--text-dim);
+      letter-spacing: .08em;
+      font-style: italic;
+      font-family: 'Cormorant Garamond', serif;
+    }
+
+    /* ── Success overlay ── */
+    .success-screen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+    }
+    .success-screen.visible { display: flex; animation: fadeUp .6s cubic-bezier(.16,1,.3,1) both; }
+    .success-icon { font-size: 3.5rem; }
+    .success-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.8rem; color: var(--gold-light);
+      font-style: italic;
+    }
+    .success-sub { font-size: .8rem; color: var(--text-dim); letter-spacing: .12em; text-transform: uppercase; }
+    .download-btn {
+      margin-top: .5rem;
+      background: transparent;
+      border: 1px solid var(--gold);
+      color: var(--gold-light);
+      font-family: 'Raleway', sans-serif;
+      font-weight: 300;
+      font-size: .8rem;
+      letter-spacing: .3em;
+      text-transform: uppercase;
+      padding: .85rem 2.2rem;
+      cursor: pointer;
+      border-radius: 1px;
+      transition: background .3s, color .3s, box-shadow .3s;
+    }
+    .download-btn:hover {
+      background: var(--gold);
+      color: var(--bg);
+      box-shadow: 0 0 30px rgba(201,168,76,.3);
+    }
+
+    /* ── Hidden voucher canvas ── */
+    #voucherCanvas { display: none; }
+  </style>
+</head>
+<body>
+
+<canvas id="confetti"></canvas>
+
+<div class="scene">
+  <div class="ornament">buono regalo</div>
+
+  <div class="card" id="mainCard">
+    <div class="corner-br"></div>
+    <div class="corner-bl"></div>
+
+    <!-- PASSWORD GATE -->
+    <div id="gateView">
+      <span class="gift-icon">🎁</span>
+      <h1>C'è qualcosa<br><em>per te</em></h1>
+      <p class="subtitle">Inserisci la parola magica</p>
+
+      <div class="input-wrap" id="inputWrap">
+        <input
+          type="password"
+          id="pwInput"
+          placeholder="password segreta"
+          autocomplete="off"
+          maxlength="30"
+        />
+      </div>
+      <p class="error-msg" id="errMsg"></p>
+      <button class="btn" onclick="checkPassword()">Apri il regalo →</button>
+
+      <p class="hint">Hai ricevuto un indizio... usalo bene ✨</p>
+    </div>
+
+    <!-- SUCCESS -->
+    <div class="success-screen" id="successView">
+      <div class="success-icon">🥳</div>
+      <p class="success-title">Auguri!</p>
+      <p class="success-sub">Il tuo buono regalo è pronto</p>
+      <button class="download-btn" onclick="downloadVoucher()">⬇ Scarica il buono</button>
+    </div>
+  </div>
+</div>
+
+<!-- Hidden canvas for voucher generation -->
+<canvas id="voucherCanvas" width="1200" height="700"></canvas>
+
+<script>
+  // ═══════════════════════════════════════════
+  //  ⚙️  CONFIGURAZIONE — modifica qui
+  // ═══════════════════════════════════════════
+  const CONFIG = {
+    password: "COMPLEANNO",        // ← cambia la password
+    nome: "Marco",                 // ← nome del festeggiato
+    regalo: "Una cena per due\nal ristorante",   // ← descrizione del regalo (usa \n per andare a capo)
+    da: "Giulia ❤️",              // ← mittente
+    anno: "2025",                  // ← anno (opzionale, per il buono)
+    scadenza: "31 dicembre 2025",  // ← scadenza (o "" per non mostrarlo)
+    coloreAccento: "#c9a84c",      // ← colore oro (puoi cambiarlo)
+  };
+  // ═══════════════════════════════════════════
+
+  function checkPassword() {
+    const input = document.getElementById('pwInput').value.trim();
+    const wrap  = document.getElementById('inputWrap');
+    const err   = document.getElementById('errMsg');
+
+    if (input.toLowerCase() === CONFIG.password.toLowerCase()) {
+      err.textContent = '';
+      document.getElementById('gateView').style.display = 'none';
+      document.getElementById('successView').classList.add('visible');
+      launchConfetti();
+    } else {
+      err.textContent = 'Password errata… riprova 🔒';
+      wrap.classList.remove('shake');
+      void wrap.offsetWidth; // reflow
+      wrap.classList.add('shake');
+      document.getElementById('pwInput').value = '';
+    }
+  }
+
+  document.getElementById('pwInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') checkPassword();
+    document.getElementById('errMsg').textContent = '';
+  });
+
+  // ── Voucher generation ──────────────────────────────────────
+  function generateVoucher() {
+    const canvas = document.getElementById('voucherCanvas');
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+
+    // Background
+    ctx.fillStyle = '#0d0a07';
+    ctx.fillRect(0, 0, W, H);
+
+    // Gold border
+    ctx.strokeStyle = CONFIG.coloreAccento;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(18, 18, W - 36, H - 36);
+    ctx.lineWidth = 1;
+    ctx.globalAlpha = .4;
+    ctx.strokeRect(28, 28, W - 56, H - 56);
+    ctx.globalAlpha = 1;
+
+    // Corner ticks
+    const tick = 36;
+    [[28,28],[W-28,28],[28,H-28],[W-28,H-28]].forEach(([x,y]) => {
+      ctx.beginPath();
+      ctx.moveTo(x - (x > W/2 ? tick : 0), y);
+      ctx.lineTo(x + (x < W/2 ? tick : 0), y);
+      ctx.moveTo(x, y - (y > H/2 ? tick : 0));
+      ctx.lineTo(x, y + (y < H/2 ? tick : 0));
+      ctx.strokeStyle = CONFIG.coloreAccento;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    });
+
+    // Decorative horizontal lines
+    ctx.globalAlpha = .15;
+    ctx.fillStyle = CONFIG.coloreAccento;
+    ctx.fillRect(60, H/2 - 1, W - 120, 1);
+    ctx.globalAlpha = 1;
+
+    // TOP label
+    ctx.font = '300 22px "Raleway", sans-serif';
+    ctx.fillStyle = '#7a6e60';
+    ctx.textAlign = 'center';
+    ctx.letterSpacing = '0.4em';
+    ctx.fillText('✦  BUONO  REGALO  ✦', W/2, 80);
+
+    // BIG gift
+    ctx.font = '80px serif';
+    ctx.fillText('🎁', W/2, 190);
+
+    // Name
+    ctx.font = 'italic 300 62px "Georgia", serif';
+    ctx.fillStyle = '#e8c97a';
+    ctx.fillText(`Caro ${CONFIG.nome},`, W/2, 300);
+
+    // Gift description
+    ctx.font = '300 36px "Georgia", serif';
+    ctx.fillStyle = '#f0e8d8';
+    const lines = CONFIG.regalo.split('\n');
+    lines.forEach((line, i) => {
+      ctx.fillText(line, W/2, 380 + i * 50);
+    });
+
+    // Divider
+    ctx.globalAlpha = .3;
+    ctx.strokeStyle = CONFIG.coloreAccento;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(200, 460 + lines.length * 10);
+    ctx.lineTo(W - 200, 460 + lines.length * 10);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    // From
+    ctx.font = '300 22px "Raleway", sans-serif';
+    ctx.fillStyle = '#7a6e60';
+    ctx.fillText(`con affetto,`, W/2, 520 + lines.length * 10);
+    ctx.font = 'italic 300 32px "Georgia", serif';
+    ctx.fillStyle = '#c9a84c';
+    ctx.fillText(CONFIG.da, W/2, 560 + lines.length * 10);
+
+    // Expiry
+    if (CONFIG.scadenza) {
+      ctx.font = '200 18px "Raleway", sans-serif';
+      ctx.fillStyle = '#4a4038';
+      ctx.fillText(`Valido fino al ${CONFIG.scadenza}`, W/2, H - 50);
+    }
+
+    return canvas.toDataURL('image/png');
+  }
+
+  function downloadVoucher() {
+    const dataUrl = generateVoucher();
+    const a = document.createElement('a');
+    a.href = dataUrl;
+    a.download = `buono-regalo-${CONFIG.nome}.png`;
+    a.click();
+  }
+
+  // ── Confetti ────────────────────────────────────────────────
+  (function() {
+    const canvas = document.getElementById('confetti');
+    const ctx = canvas.getContext('2d');
+    let W, H, particles = [], running = false;
+
+    function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+    window.addEventListener('resize', resize); resize();
+
+    const COLORS = ['#c9a84c','#e8c97a','#f0e8d8','#c95050','#5aa87a','#7a84c9'];
+
+    function Particle() {
+      this.x = Math.random() * W;
+      this.y = -10;
+      this.r = Math.random() * 7 + 4;
+      this.color = COLORS[Math.floor(Math.random() * COLORS.length)];
+      this.vx = (Math.random() - .5) * 4;
+      this.vy = Math.random() * 3 + 2;
+      this.angle = Math.random() * Math.PI * 2;
+      this.angV = (Math.random() - .5) * .2;
+      this.life = 1;
+    }
+
+    function loop() {
+      if (!running) return;
+      ctx.clearRect(0, 0, W, H);
+      particles.forEach(p => {
+        p.x += p.vx; p.y += p.vy;
+        p.angle += p.angV;
+        p.life -= .005;
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.angle);
+        ctx.globalAlpha = Math.max(0, p.life);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.r/2, -p.r/2, p.r, p.r * 1.6);
+        ctx.restore();
+      });
+      particles = particles.filter(p => p.life > 0 && p.y < H + 20);
+      if (particles.length === 0) { running = false; ctx.clearRect(0,0,W,H); return; }
+      requestAnimationFrame(loop);
+    }
+
+    window.launchConfetti = function() {
+      running = true;
+      for (let i = 0; i < 180; i++) {
+        setTimeout(() => particles.push(new Particle()), i * 18);
+      }
+      requestAnimationFrame(loop);
+    };
+  })();
+</script>
+</body>
+</html>
